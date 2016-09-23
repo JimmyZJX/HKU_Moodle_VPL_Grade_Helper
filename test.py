@@ -16,6 +16,8 @@ def compare(stuout, stdout):
 		return (1.0, "Warning: Last Newline")
 	elif re.sub('[ \n]+', " ", stuout + "\n") == re.sub('[ \n]+', " ", stdout):
 		return (0.8, "Bad Space Or Newline")
+	elif re.sub('[ \na-zA-Z:]+', " ", stuout + "\n") == re.sub('[ \na-zA-Z:]+', " ", stdout):
+		return (0.6, "Potentially Typo")
 	else:
 		return (0, "Wrong Answer")
 
@@ -38,9 +40,14 @@ programs = [f[:-4] for f in listdir(stdDir)
 	if isfile(join(stdDir, f)) and f.endswith(".cpp")]
 stdin, stdout = {}, {}
 
-csvColumns = ['score', 'comment']
+csvColumns = ['grade', 'comment']
+
+student = {} # id -> (program1, program2...)
 
 # Get the test cases and stdout.
+student['0'] = {}
+student['0']['grade'] = 0.0
+student['0']['comment'] = "Standard output"
 for program in programs:
 	stdin[program], stdout[program] = [], []
 
@@ -61,6 +68,7 @@ for program in programs:
 		quit()
 
 	csvColumns.append(program)
+	student['0'][program] = 0.0
 
 	# compile and run the sample program.
 	try:
@@ -77,6 +85,9 @@ for program in programs:
 			out = run(join(stdDir, program), shell=True, check=True, timeout=1000,
 				universal_newlines=True, input=test, stdout=PIPE, stderr=PIPE).stdout
 			stdout[program].append(out)
+			student['0'][program + "_case#%d" % i] = out
+			student['0'][program] += 1.0
+			student['0']['grade'] += 1.0
 	except Exception as e:
 		log.error("Sample program cannot run test cases.", e)
 		quit()
@@ -88,14 +99,13 @@ print(stdout)
 print("-----------------------------------------")
 
 # Compile students' programs and check output.
-student = {} # id -> (program1, program2...)
 studentID = [f for f in listdir(workingDir) if isdir(join(workingDir, f)) and f != "0"]
 
 for stuI, sid in enumerate(studentID, 1):
 	log.info("Processing student #%s (%d/%d)" % (sid, stuI, len(studentID)))
 	studentDir = join(workingDir, sid)
 	student[sid] = {}
-	student[sid]['score'] = 0.0
+	student[sid]['grade'] = 0.0
 	student[sid]['comment'] = ""
 	for program in programs:
 		# compile
@@ -108,22 +118,22 @@ for stuI, sid in enumerate(studentID, 1):
 			log.warn("Student %s's program '%s' cannot compile!" % (sid, program))
 			continue
 		# test
-		score = 0.0
+		grade = 0.0
 		comments = []
 		for i, (test, result) in enumerate(zip(stdin[program], stdout[program]), start=1):
 			try:
 				out = run(join(studentDir, program), shell=True, check=True, timeout=1000,
 					universal_newlines=True, input=test, stdout=PIPE, stderr=PIPE).stdout
 				student[sid][program + "_case#%d" % i] = repr(out)
-				cur_score, cur_comment = compare(out, result)
-				score += cur_score
+				cur_grade, cur_comment = compare(out, result)
+				grade += cur_grade
 				comments.append(cur_comment)
 			except Exception as e:
 				log.error("Fail to execute student %s's program '%s' on case %d." % (sid, program, i))
 				continue
 		student[sid]['comment'] += "<p>Quick feedback for each test case of `%s`: %s</p>" % (program, ", ".join(comments))
-		student[sid][program] = score
-		student[sid]['score'] += score
+		student[sid][program] = grade
+		student[sid]['grade'] += grade
 
 # print(student)
 

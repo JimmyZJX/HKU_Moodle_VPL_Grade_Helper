@@ -78,7 +78,12 @@ log.info("All students' info are loaded: Total #=%d" % len(studentInfo))
 r = requests.session()
 log.info("Moodle login succeeded. Hello " + loginMoodle(r, username, password, log) + "!")
 
+ContinueToEnd = False
 for sid, info in studentInfo.items():
 	submitGrade(r, assignment, sid, info['grade'], info['comment'], log)
+	if not ContinueToEnd:
+		if input('Please check the grading on Moodle. Continue To End (y/N)?').lower() == "y":
+			print("Continue submit grade to the end.")
+			ContinueToEnd = True
 
 os.system("pause")
