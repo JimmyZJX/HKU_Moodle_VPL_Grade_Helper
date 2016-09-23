@@ -72,8 +72,8 @@ with open(submissionCSV, "r", newline='') as csvFile:
 				studentInfo[sid]["comment"] = comment
 				# (studentInfo[sid]["grade"] = float(grade)) if grade != ""
 				# studentInfo[sid]["comment"] += ("<p>" + comment + "</p>") if comment != "" else "<p><br></p>"
-log.info("All students are processed:")
-print(studentInfo)
+log.info("All students' info are loaded: Total #=%d" % len(studentInfo))
+# print(studentInfo)
 
 r = requests.session()
 log.info("Moodle login succeeded. Hello " + loginMoodle(r, username, password, log) + "!")
