@@ -24,6 +24,8 @@ password = getpass.getpass("HKU Portal password: ")
 assignment = int(input("The assignment ID you want to score: "))
 submissionCSV = input("Submission CSV filename (sid, grade, comment): ")
 
+pq.fn.listOuterHtml = lambda: this.map(lambda i, el: pq(this).outerHtml())
+
 def submitGrade(r, assignment, sid, grade, comment, log):
 	listHTML = r.get("http://moodle.hku.hk/mod/assign/view.php?id=%d&action=grading" % assignment).text
 	d = pq(listHTML)
@@ -35,8 +37,13 @@ def submitGrade(r, assignment, sid, grade, comment, log):
 	d = pq(editHTML)
 
 	formV = {}
+	# log.info(d("form.gradeform input[type=hidden]").listOuterHtml())
 	for hinp in d("form.gradeform input[type=hidden]"):
-		formV[hinp.attrib['name']] = hinp.attrib['value'] # TODOTODOTODOTODOTODOTODOTODOTODOTODO: send notification
+		try:
+			formV[hinp.attrib['name']] = hinp.attrib['value'] # TODOTODOTODOTODOTODOTODOTODOTODOTODO: send notification
+		except:
+			pass
+
 	formV['grade'] = str(grade)
 	formV['assignfeedbackcomments_editor[text]'] = comment
 	formV['savegrade'] = 'Save changes'
